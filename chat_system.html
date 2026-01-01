@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Тестовая система чатов</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; }
+        
+        .app-container {
+            display: flex;
+            height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar {
+            width: 350px;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+            background: #f8f9fa;
+        }
+        
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fff;
+        }
+        
+        .message-input-area {
+            padding: 15px 20px;
+            border-top: 1px solid #ddd;
+            background: #f8f9fa;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        .message-input:focus {
+            border-color: #007bff;
+        }
+        
+        .send-button {
+            padding: 10px 25px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .send-button:hover {
+            background: #0056b3;
+        }
+        
+        .chat-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .chat-item:hover {
+            background: #f5f5f5;
+        }
+        
+        .chat-item.active {
+            background: #e3f2fd;
+            border-left: 3px solid #007bff;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        
+        .message.outgoing {
+            background: #dcf8c6;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .message.incoming {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .unread-badge {
+            background: #ff4757;
+            color: white;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: auto;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ddd;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        
+        .status-dot.online {
+            background: #00b894;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Сайдбар с чатами -->
+        <div class="sidebar">
+            <div style="padding: 20px; border-bottom: 1px solid #ddd;">
+                <h2>Мои чаты</h2>
+                <button onclick="loadChats()" style="margin-top: 10px; padding: 5px 10px;">
+                    Обновить
+                </button>
+                <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                    ID: <span id="myId">...</span>
+                </div>
+            </div>
+            <div id="chatsList" style="flex: 1; overflow-y: auto;">
+                <div class="loading">Загрузка чатов...</div>
+            </div>
+        </div>
+        
+        <!-- Область чата -->
+        <div class="chat-area" id="chatArea">
+            <div class="chat-header" id="chatHeader">
+                <h3>Выберите чат</h3>
+            </div>
+            
+            <div class="messages-container" id="messagesContainer">
+                <div class="loading">
+                    <div>Выберите чат для начала общения</div>
+                    <div style="margin-top: 10px; font-size: 14px; color: #999;">
+                        Тестовая система сообщений
+                    </div>
+                </div>
+            </div>
+            
+            <div class="message-input-area" id="messageInputArea" style="display: none;">
+                <input type="text" class="message-input" id="messageInput" 
+                       placeholder="Введите сообщение..." autocomplete="off">
+                <button class="send-button" onclick="sendMessage()">Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ========== КОНФИГУРАЦИЯ ==========
+    const API_BASE = window.location.origin + '/api/';
+    let TOKEN = localStorage.getItem('speakup_token');
+    let MY_ID = null;
+    let currentChat = null;
+    
+    // Если нет токена, запросим его
+    if (!TOKEN) {
+        TOKEN = prompt('Введите токен (из localStorage speakup_token):');
+        if (TOKEN) {
+            localStorage.setItem('speakup_token', TOKEN);
+        } else {
+            alert('Требуется токен для работы!');
+            window.location.href = '/';
+        }
+    }
+    
+    // Декодируем токен чтобы получить ID
+    try {
+        const tokenData = JSON.parse(atob(TOKEN.split('.')[1] || TOKEN));
+        MY_ID = tokenData.user_id;
+        document.getElementById('myId').textContent = MY_ID;
+    } catch (e) {
+        console.error('Ошибка декодирования токена:', e);
+    }
+    
+    // ========== ЗАГРУЗКА ЧАТОВ ==========
+    async function loadChats() {
+        try {
+            document.getElementById('chatsList').innerHTML = '<div class="loading">Загрузка...</div>';
+            
+            const response = await fetch(`${API_BASE}get_chats.php?token=${TOKEN}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                displayChats(data.chats);
+                if (data.my_id) {
+                    MY_ID = data.my_id;
+                    document.getElementById('myId').textContent = MY_ID;
+                }
+            } else {
+                document.getElementById('chatsList').innerHTML = 
+                    `<div class="loading" style="color: #ff4757;">Ошибка: ${data.error}</div>`;
+            }
+        } catch (error) {
+            console.error('Ошибка сети:', error);
+            document.getElementById('chatsList').innerHTML = 
+                `<div class="loading" style="color: #ff4757;">Ошибка сети</div>`;
+        }
+    }
+    
+    function displayChats(chats) {
+        const container = document.getElementById('chatsList');
+        
+        if (!chats || chats.length === 0) {
+            container.innerHTML = '<div class="loading">Нет чатов</div>';
+            return;
+        }
+        
+        let html = '';
+        chats.forEach(chat => {
+            const lastMessage = chat.last_message ? 
+                (chat.last_message.length > 30 ? chat.last_message.substring(0, 30) + '...' : chat.last_message) 
+                : 'Нет сообщений';
+            
+            const time = chat.last_message_time ? formatTime(chat.last_message_time) : '';
+            
+            html += `
+                <div class="chat-item" onclick="openChat(${chat.other_user_id}, '${chat.other_display_name || chat.other_username}')" 
+                     id="chat_${chat.other_user_id}">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-weight: bold; font-size: 16px;">
+                            ${chat.other_display_name || chat.other_username}
+                        </div>
+                        ${chat.unread_count > 0 ? 
+                            `<div class="unread-badge">${chat.unread_count}</div>` : ''}
+                    </div>
+                    <div style="color: #666; font-size: 14px; margin-top: 5px;">${lastMessage}</div>
+                    <div style="color: #999; font-size: 12px; margin-top: 3px;">${time}</div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+    
+    // ========== ОТКРЫТИЕ ЧАТА ==========
+    async function openChat(otherUserId, otherUserName) {
+        currentChat = { id: otherUserId, name: otherUserName };
+        
+        // Обновляем UI
+        document.getElementById('chatHeader').innerHTML = `
+            <h3>${otherUserName}</h3>
+            <div style="color: #666; font-size: 14px;">ID: ${otherUserId}</div>
+        `;
+        
+        document.getElementById('messageInputArea').style.display = 'flex';
+        
+        // Сбрасываем выделение у всех
+        document.querySelectorAll('.chat-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Выделяем активный
+        const activeChat = document.getElementById(`chat_${otherUserId}`);
+        if (activeChat) {
+            activeChat.classList.add('active');
+        }
+        
+        // Загружаем сообщения
+        await loadMessages(otherUserId);
+    }
+    
+    // ========== ЗАГРУЗКА СООБЩЕНИЙ ==========
+    async function loadMessages(otherUserId) {
+        try {
+            document.getElementById('messagesContainer').innerHTML = '<div class="loading">Загрузка сообщений...</div>';
+            
+            const response = await fetch(
+                `${API_BASE}get_messages.php?token=${TOKEN}&other_user_id=${otherUserId}`
+            );
+            const data = await response.json();
+            
+            if (data.success) {
+                displayMessages(data.messages, data.my_id || MY_ID);
+            } else {
+                document.getElementById('messagesContainer').innerHTML = 
+                    `<div class="loading" style="color: #ff4757;">Ошибка: ${data.error}</div>`;
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки сообщений:', error);
+            document.getElementById('messagesContainer').innerHTML = 
+                `<div class="loading" style="color: #ff4757;">Ошибка сети</div>`;
+        }
+    }
+    
+    function displayMessages(messages, myId) {
+        const container = document.getElementById('messagesContainer');
+        
+        if (!messages || messages.length === 0) {
+            container.innerHTML = `
+                <div class="loading">
+                    <div>Начните диалог!</div>
+                    <div style="margin-top: 10px; font-size: 14px; color: #999;">
+                        Нет сообщений
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        messages.forEach(msg => {
+            const isOutgoing = msg.sender_id == myId;
+            const time = formatTime(msg.created_at);
+            
+            html += `
+                <div class="message ${isOutgoing ? 'outgoing' : 'incoming'}">
+                    <div>${msg.message}</div>
+                    <div class="message-time">${time} ${!isOutgoing ? '• ' + (msg.sender_display_name || msg.sender_username) : ''}</div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        
+        // Прокручиваем вниз
+        setTimeout(() => {
+            container.scrollTop = container.scrollHeight;
+        }, 100);
+    }
+    
+    // ========== ОТПРАВКА СООБЩЕНИЙ ==========
+    async function sendMessage() {
+        if (!currentChat) {
+            alert('Выберите чат!');
+            return;
+        }
+        
+        const input = document.getElementById('messageInput');
+        const message = input.value.trim();
+        
+        if (!message) return;
+        
+        try {
+            // Показываем сразу
+            addMessageToUI(message, true);
+            input.value = '';
+            
+            // Отправляем на сервер
+            const formData = new FormData();
+            formData.append('receiver_id', currentChat.id);
+            formData.append('message', message);
+            formData.append('token', TOKEN);
+            
+            const response = await fetch(`${API_BASE}send_message.php`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Обновляем список чатов
+                setTimeout(loadChats, 500);
+            } else {
+                alert('Ошибка отправки: ' + (data.error || 'неизвестная ошибка'));
+            }
+        } catch (error) {
+            console.error('Ошибка отправки:', error);
+            alert('Ошибка сети при отправке');
+        }
+    }
+    
+    function addMessageToUI(messageText, isOutgoing = true) {
+        const container = document.getElementById('messagesContainer');
+        
+        // Если это приветственное сообщение, очищаем его
+        if (container.children.length === 1 && 
+            container.children[0].classList.contains('loading')) {
+            container.innerHTML = '';
+        }
+        
+        const messageElement = document.createElement('div');
+        messageElement.className = `message ${isOutgoing ? 'outgoing' : 'incoming'}`;
+        
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        messageElement.innerHTML = `
+            <div>${messageText}</div>
+            <div class="message-time">${time}</div>
+        `;
+        
+        container.appendChild(messageElement);
+        
+        // Прокручиваем вниз
+        setTimeout(() => {
+            container.scrollTop = container.scrollHeight;
+        }, 100);
+    }
+    
+    // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+    function formatTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diff = now - date;
+        
+        // Если сегодня
+        if (diff < 86400000) {
+            return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+        // Если вчера или раньше
+        return date.toLocaleDateString();
+    }
+    
+    // Обработчик Enter для отправки
+    document.getElementById('messageInput')?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+    
+    // Загружаем чаты при загрузке страницы
+    window.addEventListener('DOMContentLoaded', () => {
+        loadChats();
+        // Автоматическое обновление каждые 10 секунд
+        setInterval(loadChats, 10000);
+    });
+    
+    // Функция для тестирования
+    window.testSendMessage = function(userId, message) {
+        if (!userId) userId = prompt('Введите ID пользователя:');
+        if (!message) message = prompt('Введите сообщение:');
+        
+        fetch(`${API_BASE}send_message.php`, {
+            method: 'POST',
+            body: new FormData()
+        }).then(r => r.json()).then(console.log);
+    };
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "SpeakUp Messenger",
+  "short_name": "SpeakUp",
+  "description": "Telegram-like messenger",
+  "start_url": "/speakup.html",
+  "display": "standalone",
+  "background_color": "#0e1621",
+  "theme_color": "#0e1621",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/739/739286.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

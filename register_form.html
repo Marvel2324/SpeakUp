@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Регистрация в SpeakUp</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial; max-width: 400px; margin: 50px auto; padding: 20px; }
+        .form-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; margin-bottom: 20px; color: #333; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #555; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
+        button { width: 100%; padding: 12px; background: #4a90e2; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #3a80d2; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 5px; display: none; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="form-box">
+        <h2>📝 Регистрация в SpeakUp</h2>
+        
+        <form id="regForm">
+            <div class="input-group">
+                <label>Имя пользователя *</label>
+                <input type="text" id="username" placeholder="например, alex123" required>
+                <small style="color:#666;">3-32 символа, буквы/цифры/_</small>
+            </div>
+            
+            <div class="input-group">
+                <label>Email *</label>
+                <input type="email" id="email" placeholder="ваш@email.com" required>
+            </div>
+            
+            <div class="input-group">
+                <label>Пароль *</label>
+                <input type="password" id="password" placeholder="минимум 6 символов" required>
+            </div>
+            
+            <div class="input-group">
+                <label>Отображаемое имя (не обязательно)</label>
+                <input type="text" id="display_name" placeholder="Как вас будут видеть">
+            </div>
+            
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+        
+        <div id="result"></div>
+        
+        <p style="text-align:center; margin-top:20px;">
+            Уже есть аккаунт? <a href="login_form.html">Войти</a>
+        </p>
+    </div>
+
+    <script>
+    document.getElementById('regForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const display_name = document.getElementById('display_name').value.trim() || username;
+        
+        // Проверки
+        if (password.length < 6) {
+            showResult('Пароль должен быть не менее 6 символов', 'error');
+            return;
+        }
+        
+        // Кнопка "загрузка"
+        const btn = document.querySelector('button');
+        const btnText = btn.textContent;
+        btn.textContent = 'Отправка...';
+        btn.disabled = true;
+        
+        // Отправка на API
+        fetch('api/auth/register.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username, email, password, display_name})
+        })
+        .then(r => {
+            console.log('Статус ответа:', r.status);
+            return r.text();
+        })
+        .then(text => {
+            console.log('Сырой ответ от сервера:', text);
+            
+            try {
+                const data = JSON.parse(text);
+                
+                if (data.success) {showResult(
+                        '✅ Успешная регистрация!<br><br>' +
+                        '<strong>Ваши данные:</strong><br>' +
+                        'Логин: ' + data.user.username + '<br>' +
+                        'Email: ' + data.user.email + '<br>' +
+                        'ID: ' + data.user.id + '<br><br>' +
+                        '<a href="login_form.html">Войти сейчас</a>',
+                        'success'
+                    );
+                    document.getElementById('regForm').reset();
+                } else {
+                    showResult('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
+                }
+            } catch (e) {
+                console.error('Ошибка парсинга JSON:', e);
+                showResult('❌ Сервер вернул не JSON. Ответ: ' + text.substring(0, 200), 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Ошибка сети:', err);
+            showResult('❌ Ошибка сети: ' + err.message, 'error');
+        })
+        .finally(() => {
+            btn.textContent = btnText;
+            btn.disabled = false;
+        });
+    });
+    
+    function showResult(msg, type) {
+        const el = document.getElementById('result');
+        el.innerHTML = msg;
+        el.className = type;
+        el.style.display = 'block';
+        el.scrollIntoView();
+    }
+    </script>
+</body>
+</html>

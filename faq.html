@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeakUp • Руководство по тестированию</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --tg-bg: #0e1621;
+            --tg-sidebar: #17212b;
+            --tg-chat-bg: #0e1621;
+            --tg-border: #242f3d;
+            --tg-text: #ffffff;
+            --tg-text-secondary: #7f91a4;
+            --tg-blue: #2b5278;
+            --tg-green: #00af9c;
+            --tg-red: #ed4242;
+            --tg-orange: #ff9500;
+            --tg-purple: #5856d6;
+            --tg-gradient: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body { 
+            background: var(--tg-bg); 
+            color: var(--tg-text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+        
+        body.light-theme {
+            --tg-bg: #ffffff;
+            --tg-sidebar: #f8f9fa;
+            --tg-chat-bg: #ffffff;
+            --tg-border: #e9ecef;
+            --tg-text: #212529;
+            --tg-text-secondary: #6c757d;
+            --tg-blue: #007bff;
+            --tg-green: #28a745;
+            --tg-red: #dc3545;
+            --tg-orange: #fd7e14;
+            --tg-purple: #6f42c1;
+            --tg-gradient: linear-gradient(135deg, #6a11cb, #2575fc);
+        }
+        
+        /* Шапка */
+        .header {
+            background: var(--tg-sidebar);
+            padding: 25px 30px;
+            border-bottom: 1px solid var(--tg-border);
+            position: relative; /* Изменено с sticky на relative */
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(23, 33, 43, 0.9);
+        }
+        
+        .light-theme .header {
+            background: rgba(248, 249, 250, 0.9);
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--tg-green);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo::before {
+            content: "\f086";
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 30px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .nav-btn {
+            padding: 10px 20px;
+            background: rgba(0, 175, 156, 0.1);
+            border: 1px solid rgba(0, 175, 156, 0.2);
+            border-radius: 10px;
+            color: var(--tg-green);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(0, 175, 156, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 175, 156, 0.2);
+        }
+        
+        .nav-btn.back-btn {
+            background: rgba(43, 82, 120, 0.1);
+            border-color: rgba(43, 82, 120, 0.2);
+            color: var(--tg-blue);
+        }
+        
+        .nav-btn.back-btn:hover {
+            background: rgba(43, 82, 120, 0.2);
+            box-shadow: 0 4px 12px rgba(43, 82, 120, 0.2);
+        }
+        
+        /* Основной контент */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 30px;
+        }
+        
+        /* Боковое меню навигации */
+        .sidebar-nav {
+            position: sticky;
+            top: 120px;
+            height: fit-content;
+        }
+        
+        .nav-section {
+            background: var(--tg-sidebar);
+            border-radius: 16px;
+            border: 1px solid var(--tg-border);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .nav-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--tg-green);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-title::before {
+            content: "";
+            display: block;
+            width: 8px;
+            height: 8px;
+            background: var(--tg-green);
+            border-radius: 50%;
+        }
+        
+        .nav-links {
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-bottom: 8px;
+        }
+        
+        .nav-links a {
+            display: block;
+            padding: 10px 15px;
+            color: var(--tg-text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            position: relative;
+            padding-left: 35px;
+        }
+        
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--tg-text);
+        }
+        
+        .nav-links a.active {
+            background: rgba(0, 175, 156, 0.1);
+            color: var(--tg-green);
+            border-left: 3px solid var(--tg-green);
+        }
+        
+        .nav-links a::before {
+            content: "›";
+            position: absolute;
+            left: 15px;
+            color: var(--tg-text-secondary);
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover::before,
+        .nav-links a.active::before {
+            color: var(--tg-green);
+        }
+        
+        /* Основное содержимое */
+        .main-content {
+            background: var(--tg-sidebar);
+            border-radius: 20px;
+            border: 1px solid var(--tg-border);
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .page-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: var(--tg-text);
+            background: linear-gradient(135deg, var(--tg-text), var(--tg-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .page-subtitle {
+            font-size: 18px;
+            color: var(--tg-text-secondary);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        /* Разделы */
+        .section {
+            margin-bottom: 60px;
+            position: relative;
+            padding-left: 40px;
+        }
+        
+        .section::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--tg-green), transparent);
+            border-radius: 3px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--tg-border);
+        }
+        
+        .section-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--tg-green), #009688);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        
+        .section-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--tg-text);
+        }
+        
+        .section-content {
+            color: var(--tg-text-secondary);
+            line-height: 1.8;
+            font-size: 16px;
+        }
+        
+        /* Пункты и списки */
+        .subsection {
+            margin: 25px 0;
+        }
+        
+        .subsection-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--tg-text);
+            margin-bottom: 15px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .subsection-title::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--tg-green);
+            font-size: 24px;
+        }
+        
+        .subsection-content {
+            padding-left: 20px;
+            color: var(--tg-text-secondary);
+            line-height: 1.7;
+        }
+        
+        .rule-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+        
+        .rule-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+        }
+        
+        .light-theme .rule-item {
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .rule-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(0, 175, 156, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .rule-number {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--tg-green), #009688);
+            color: white;
+            border-radius: 6px;
+            text-align: center;
+            line-height: 28px;
+            font-weight: 600;
+            font-size: 14px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        .rule-subitem {
+            margin: 10px 0 10px 30px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            border-left: 3px solid var(--tg-blue);
+        }
+        
+        .light-theme .rule-subitem {
+            background: rgba(0, 0, 0, 0.01);
+        }
+        
+        /* Вопрос-ответ */
+        .qa-block {
+            margin: 25px 0;
+            padding: 20px;
+            background: rgba(0, 175, 156, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 175, 156, 0.1);
+        }
+        
+        .light-theme .qa-block {
+            background: rgba(0, 175, 156, 0.03);
+        }
+        
+        .question {
+            font-weight: 600;
+            color: var(--tg-text);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .question::before {
+            content: "Q:";
+            color: var(--tg-green);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .answer {
+            color: var(--tg-text-secondary);
+            line-height: 1.7;
+            padding-left: 25px;
+        }
+        
+        .answer::before {
+            content: "A:";
+            color: var(--tg-blue);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        /* Примечания и важная информация */
+        .note {
+            margin: 25px 0;
+            padding: 20px;
+            background: rgba(255, 149, 0, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 149, 0, 0.1);
+            color: var(--tg-orange);
+        }
+        
+        .note-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .note-title::before {
+            content: "!";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: var(--tg-orange);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        /* Кнопка возврата */
+        .return-section {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid var(--tg-border);
+        }
+        
+        .return-btn {
+            padding: 18px 50px;
+            background: linear-gradient(135deg, var(--tg-green), #009688);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0, 175, 156, 0.3);
+        }
+        
+        .return-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 175, 156, 0.4);
+        }
+        
+        .return-btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .return-btn::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+        
+        .return-btn:focus:not(:active)::after {
+            animation: ripple 1s ease-out;
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+        
+        .return-text {
+            margin-top: 20px;
+            color: var(--tg-text-secondary);
+            font-size: 14px;
+        }
+        
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .section:nth-child(2) { animation-delay: 0.1s; }
+        .section:nth-child(3) { animation-delay: 0.2s; }
+        .section:nth-child(4) { animation-delay: 0.3s; }
+        
+        /* Адаптивность */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+            
+            .sidebar-nav {
+                position: static;
+                order: 2;
+            }
+            
+            .main-content {
+                order: 1;
+            }
+            
+            .nav-section {
+                margin-bottom: 30px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+            
+            .nav-buttons {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .main-content {
+                padding: 25px;
+            }
+            
+            .page-title {
+                font-size: 28px;
+            }
+            
+            .section {
+                padding-left: 20px;
+            }
+            
+            .section-title {
+                font-size: 24px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .return-btn {
+                width: 100%;
+                padding: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .section-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .rule-item {
+                padding: 12px;
+            }
+            
+            .rule-subitem {
+                margin-left: 20px;
+            }
+        }
+        
+        /* Плавная прокрутка */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Выделение текста */
+        ::selection {
+            background: rgba(0, 175, 156, 0.3);
+            color: var(--tg-text);
+        }
+        
+        /* Прогресс чтения */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--tg-border);
+            z-index: 1000;
+        }
+        
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--tg-green), #009688);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        /* Анимация появления кнопки */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .return-section {
+            animation: slideUp 0.8s ease-out 0.5s both;
+        }
+    </style>
+</head>
+<body>
+    <!-- Прогресс чтения -->
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="progressBar"></div>
+    </div>
+    
+    <!-- Шапка -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">SpeakUp FAQ</div>
+            <div class="nav-buttons">
+                <a href="speakup.html" class="nav-btn back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Вернуться в мессенджер
+                </a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Основной контейнер -->
+    <div class="container">
+        <!-- Боковая навигация -->
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-title">Навигация</div>
+                <ul class="nav-links">
+                    <li><a href="#section1" class="active">Общее положение</a></li>
+                    <li><a href="#section2">О тестировании</a></li>
+                    <li><a href="#section3">О тестировщиках</a></li>
+                    <li><a href="#section4">Правила тестирования</a></li>
+                    <li><a href="#return">Вернуться в меню</a></li>
+                </ul>
+            </div>
+        </nav>
+        
+        <!-- Основное содержимое -->
+        <main class="main-content">
+            <h1 class="page-title">SpeakUp: Руководство закрытого бета-тестирования</h1>
+            <p class="page-subtitle">
+                Полное руководство для участников закрытого бета-тестирования мессенджера SpeakUp. 
+                Внимательно ознакомьтесь со всеми разделами перед началом работы с платформой.
+            </p>
+            
+            <!-- Раздел 1 -->
+            <section class="section" id="section1">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h2 class="section-title">1. Общее положение о мессенджере SpeakUp</h2>
+                </div>
+                
+                <div class="section-content">
+                    <p>
+                        <strong>SpeakUp</strong> — это инновационный многофункциональный мессенджер нового поколения, 
+                        разработанный с учетом современных требований к цифровой коммуникации. 
+                        Платформа сочетает в себе передовые технологии обмена сообщениями, 
+                        инструменты для групповой работы и уникальные возможности персонализации интерфейса.
+                    </p>
+                    
+                    <div class="subsection">
+                        <h3 class="subsection-title">Основные задачи и цели SpeakUp:</h3>
+                        <div class="subsection-content">
+                            <ul class="rule-list">
+                                <li class="rule-item">
+                                    <span class="rule-number">1</span>
+                                    <strong>Безопасная коммуникация:</strong> Обеспечение полной конфиденциальности переписки 
+                                    с применением современных протоколов шифрования.
+                                </li>
+                                <li class="rule-item">
+                                    <span class="rule-number">2</span>
+                                    <strong>Гибкость общения:</strong> Поддержка приватных диалогов, групповых чатов, 
+                                    тематических каналов и публичных сообществ.
+                                </li>
+                                <li class="rule-item">
+                                    <span class="rule-number">3</span>
+                                    <strong>Адаптивный интерфейс:</strong> Персонализация пользовательского опыта 
+                                    через систему тем оформления, настроек отображения и доступных функций.
+                                </li>
+                                <li class="rule-item">
+                                    <span class="rule-number">4</span>
+                                    <strong>Кроссплатформенность:</strong> Синхронизация данных между различными устройствами 
+                                    при сохранении единого стандарта безопасности.
+                                </li>
+                                <li class="rule-item">
+                                    <span class="rule-number">5</span>
+                                    <strong>Расширенная функциональность:</strong> Интеграция инструментов для совместной работы, 
+                                    включая обмен файлами, голосовые сообщения, планирование задач и медиаконтент.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="subsection">
+                        <h3 class="subsection-title">Ключевые преимущества SpeakUp:</h3>
+                        <div class="subsection-content">
+                            <p>
+                                1. <strong>Многоуровневая система безопасности:</strong> Каждый аспект взаимодействия проходит 
+                                через несколько этапов проверки, что минимизирует риски утечки данных.
+                            </p>
+                            <p>
+                                2. <strong>Масштабируемая архитектура:</strong> Платформа спроектирована с учетом возможности 
+                                внедрения дополнительных модулей и интеграции со сторонними сервисами.
+                            </p>
+                            <p>
+                                3. <strong>Интуитивное управление:</strong> Продуманный пользовательский интерфейс сокращает 
+                                время на освоение функционала даже для технически неподготовленных пользователей.
+                            </p>
+                            <p>
+                                4. <strong>Производительность:</strong> Оптимизированные алгоритмы обработки данных обеспечивают 
+                                стабильную работу даже при высоких нагрузках на серверную инфраструктуру.
+                            </p>
+                            <p>
+                                5. <strong>Поддержка командной работы:</strong> Встроенные инструменты для управления проектами, 
+                                распределения задач и контроля исполнения.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Вопрос-ответ блок -->
+                    <div class="qa-block" id="qa-block1">
+                        <div class="question">
+                            В чем принципиальное отличие SpeakUp от существующих мессенджеров?
+                        </div>
+                        <div class="answer">
+                            SpeakUp разрабатывается с акцентом на адаптивность и расширяемость. 
+                            В отличие от статичных платформ, наша система позволяет гибко настраивать 
+                            функционал под потребности конкретного сообщества пользователей, сохраняя 
+                            при этом единые стандарты безопасности.
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Раздел 2 -->
+            <section class="section" id="section2">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <h2 class="section-title">2. Общее положение о закрытом бета-тестировании</h2>
+                </div>
+                
+                <div class="section-content">
+                    <p>
+                        Текущий этап разработки SpeakUp классифицируется как <strong>закрытое бета-тестирование</strong>. 
+                        Это означает ограниченный доступ к платформе для предварительной оценки функционала, 
+                        выявления технических недочетов и сбора первичной обратной связи.
+                    </p>
+                    
+                    <div class="note">
+                        <div class="note-title">Важная информация</div>
+                        <p>
+                            На данном этапе мессенджер находится в активной стадии разработки, что предполагает 
+                            наличие нерешенных технических вопросов и потенциальных проблем в работе.
+                        </p>
+                    </div>
+                    
+                    <div class="subsection">
+                        <h3 class="subsection-title">Потенциальные технические сложности:</h3>
+                        <div class="subsection-content">
+                            <ul class="rule-list">
+                                <li class="rule-item">
+                                    <span class="rule-number">1</span>
+                                    <strong>Критические баги:</strong> Фундаментальные ошибки в алгоритмах работы, 
+                                    приводящие к полной или частичной неработоспособности отдельных модулей системы.
+                                </li>
+                                <li class="rule-item">
+                                    <span class="rule-number">2</span>
+                                    <strong>Недочеты интерфейса:</strong> Несоответствия в отображении элементов управления, 
+                                    некорректная работа анимаций, проблемы с адаптивностью на различных разрешениях экрана.
+                                </li>
+                                <li class="rule-item">
+                                    <span class="rule-number">3</span>
+                                    <strong>Функциональные недоработки:</strong> Частичная реализация заявленных возможностей, 
+                                    ограниченный доступ к определенным инструментам, отсутствие обещанных функций.
+                                </li>
+                                <li class="rule-item">
+                                    <span class="rule-number">4</span>
+                                    <strong>Ошибки обработки данных:</strong> Некорректное сохранение информации, 
+                                    проблемы с синхронизацией между устройствами, утеря или повреждение передаваемых файлов.
+                                </li>
+                                <li class="rule-item">
+                                    <span class="rule-number">5</span>
+                                    <strong>Проблемы производительности:</strong> Замедление работы интерфейса при выполнении 
+                                    определенных действий, повышенное потребление системных ресурсов.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="subsection">
+                        <h3 class="subsection-title">Рекомендации для участников тестирования:</h3>
+                        <div class="subsection-content">
+                            <div class="rule-item">
+                                <span class="rule-number">1</span>
+                                <strong>Регулярное сохранение важной информации:</strong> Не рекомендуется использовать 
+                                платформу в качестве основного хранилища критически важных данных до окончания этапа тестирования.
+                            </div>
+                            <div class="rule-item">
+                                <span class="rule-number">2</span>
+                                <strong>Тестирование на резервных устройствах:</strong> По возможности проводить проверку 
+                                функционала на устройствах, не используемых для повседневных задач.
+                            </div>
+                            <div class="rule-item">
+                                <span class="rule-number">3</span>
+                                <strong>Фиксация проблем:</strong> Все обнаруженные неполадки должны быть зафиксированы 
+                                с максимальной детализацией — время возникновения, последовательность действий, 
+                                ожидаемый и фактический результат.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Вопрос-ответ блок -->
+                    <div class="qa-block" id="qa-block2">
+                        <div class="question">
+                            Насколько стабильна работа мессенджера на текущем этапе?
+                        </div>
+                        <div class="answer">
+                            Система проходит активную отладку, что означает возможные периодические сбои в работе. 
+                            Рекомендуется воспринимать текущую версию как демонстрацию концепции, а не как завершенный продукт. 
+                            Техническая поддержка работает в режиме повышенной готовности для оперативного решения критических проблем.
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Раздел 3 -->
+            <section class="section" id="section3">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h2 class="section-title">3. Общее положение о тестировщиках</h2>
+                </div>
+                
+                <div class="section-content">
+                    <p>
+                        <strong>Тестировщик SpeakUp</strong> — это участник закрытого бета-тестирования, 
+                        обладающий расширенными правами доступа к функционалу платформы и несущий ответственность 
+                        за оценку ее работоспособности.
+                    </p>
+                    
+                    <div class="subsection">
+                        <h3 class="subsection-title">Основные обязанности тестировщика:</h3>
+                        <div class="subsection-content">
+                            <ul class="rule-list">
+                                <li class="rule-item">
+                                    <span class="rule-number">1</span>
+                                    <strong>Систематическое тестирование функционала:</strong> Поэтапная проверка каждого инструмента 
+                                    и возможности платформы. Воспроизведение типовых и экстремальных сценариев использования.
+                                </li>
+                                <li class="rule-item">
+                                    <span class="rule-number">2</span>
+                                    <strong>Выявление и документирование технических проблем:</strong> Обнаружение багов, недочетов 
+                                    и ошибок в работе интерфейса или серверной части. Формирование подробных отчетов.
+                                </li>
+                                <li class="rule-item">
+                                    <span class="rule-number">3</span>
+                                    <strong>Оценка пользовательского опыта:</strong> Анализ удобства навигации и доступности функций. 
+                                    Проверка соответствия интерфейса принципам эргономики и юзабилити.
+                                </li>
+                                <li class="rule-item">
+                                    <span class="rule-number">4</span>
+                                    <strong>Проверка безопасности и конфиденциальности:</strong> Контроль корректности работы 
+                                    механизмов шифрования. Проверка защиты данных от несанкционированного доступа.
+                                </li>
+                                <li class="rule-item">
+                                    <span class="rule-number">5</span>
+                                    <strong>Сбор и анализ обратной связи:</strong> Формулирование предложений по улучшению функционала. 
+                                    Участие в опросах и оценках новых функций.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Вопрос-ответ блок -->
+                    <div class="qa-block" id="qa-block3">
+                        <div class="question">
+                            Какие квалификационные требования предъявляются к тестировщикам?
+                        </div>
+                        <div class="answer">
+                            Тестировщик должен обладать базовым пониманием принципов работы программного обеспечения, 
+                            способностью к систематическому анализу, внимательностью к деталям и умением четко формулировать 
+                            технические проблемы. Приветствуется опыт участия в подобных проектах, но не является обязательным требованием.
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Раздел 4 -->
+            <section class="section" id="section4">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-gavel"></i>
+                    </div>
+                    <h2 class="section-title">4. Правила и регламент для участников тестирования</h2>
+                </div>
+                
+                <div class="section-content">
+                    <!-- Подраздел 4.1 -->
+                    <div class="subsection">
+                        <h3 class="subsection-title">4.1. Конфиденциальность и защита информации</h3>
+                        <div class="subsection-content">
+                            <div class="rule-item">
+                                <span class="rule-number">1.1</span>
+                                Запрещено разглашение любой информации, касающейся этапов разработки мессенджера SpeakUp, 
+                                включая технические особенности реализации, используемые технологии, архитектурные решения 
+                                и внутренние процессы команды разработчиков.
+                            </div>
+                            <div class="rule-subitem">
+                                <strong>1.1.1</strong> Не допускается публикация в открытых источниках скриншотов, 
+                                видеозаписей, текстовых описаний интерфейса или функционала, доступ к которым ограничен 
+                                текущим этапом бета-тестирования.
+                            </div>
+                            <div class="rule-subitem">
+                                <strong>1.1.2</strong> Участникам тестирования запрещено передавать доступ к платформе 
+                                третьим лицам, создавать дополнительные учетные записи без согласования с администрацией 
+                                или пытаться обойти систему ограничения доступа.
+                            </div>
+                            
+                            <div class="rule-item">
+                                <span class="rule-number">1.2</span>
+                                Все обнаруженные уязвимости системы безопасности должны быть немедленно сообщены 
+                                администрации через специально предназначенные для этого каналы связи.
+                            </div>
+                            <div class="rule-subitem">
+                                <strong>1.2.1</strong> Самостоятельное исследование или использование уязвимостей 
+                                в личных целях категорически запрещено.
+                            </div>
+                            
+                            <div class="rule-item">
+                                <span class="rule-number">1.3</span>
+                                Запрещено сохранение и распространение конфиденциальной документации, технических 
+                                спецификаций, планов разработки и любой другой внутренней информации.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Подраздел 4.2 -->
+                    <div class="subsection">
+                        <h3 class="subsection-title">4.2. Профессиональная этика и стандарты общения</h3>
+                        <div class="subsection-content">
+                            <div class="rule-item">
+                                <span class="rule-number">2.1</span>
+                                Взаимодействие между участниками тестирования, администрацией и разработчиками должно 
+                                строиться на принципах взаимоуважения, конструктивности и профессиональной корректности.
+                            </div>
+                            <div class="rule-subitem">
+                                <strong>2.1.1</strong> Запрещено использование ненормативной лексики, оскорбительных 
+                                высказываний, дискриминационных замечаний.
+                            </div>
+                            
+                            <div class="rule-item">
+                                <span class="rule-number">2.2</span>
+                                Критика функционала или выявленных проблем должна быть аргументированной, конкретной 
+                                и направленной на решение технических вопросов.
+                            </div>
+                            
+                            <div class="rule-item">
+                                <span class="rule-number">2.3</span>
+                                Запрещено создание конфликтных ситуаций, провокационное поведение, распространение 
+                                непроверенной информации или слухов о проекте.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Подраздел 4.3 -->
+                    <div class="subsection">
+                        <h3 class="subsection-title">4.3. Качество отчетности и документации</h3>
+                        <div class="subsection-content">
+                            <div class="rule-item">
+                                <span class="rule-number">3.1</span>
+                                Отчеты о найденных проблемах должны содержать исчерпывающую информацию: точное описание 
+                                проблемы, последовательность действий для воспроизведения, ожидаемый и фактический результат.
+                            </div>
+                            <div class="rule-subitem">
+                                <strong>3.1.1</strong> Обязательно указание технических характеристик устройства 
+                                и среды выполнения.
+                            </div>
+                            
+                            <div class="rule-item">
+                                <span class="rule-number">3.2</span>
+                                Запрещено создание дублирующих отчетов об уже известных проблемах.
+                            </div>
+                            <div class="rule-subitem">
+                                <strong>3.2.1</strong> Перед созданием нового отчета необходимо убедиться в отсутствии 
+                                аналогичных заявок в системе отслеживания ошибок.
+                            </div>
+                            
+                            <div class="rule-item">
+                                <span class="rule-number">3.3</span>
+                                Все предложения по улучшению функционала должны сопровождаться техническим обоснованием.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Подраздел 4.4 -->
+                    <div class="subsection">
+                        <h3 class="subsection-title">4.4. Работа в команде и иерархическая структура</h3>
+                        <div class="subsection-content">
+                            <div class="rule-item">
+                                <span class="rule-number">4.1</span>
+                                Система SpeakUp функционирует на основе четкой иерархической структуры, 
+                                включающей три основных уровня доступа.
+                            </div>
+                            <div class="rule-subitem">
+                                <strong>4.1.1</strong> <strong>Администраторы:</strong> Полный контроль над платформой, 
+                                управление пользователями, настройка системы, доступ ко всей статистике и отчетности.
+                            </div>
+                            <div class="rule-subitem">
+                                <strong>4.1.2</strong> <strong>Тестировщики:</strong> Расширенный доступ к функционалу 
+                                для проведения тестирования, возможность создания отчетов об ошибках.
+                            </div>
+                            <div class="rule-subitem">
+                                <strong>4.1.3</strong> <strong>Пользователи:</strong> Базовый доступ к основным функциям 
+                                мессенджера без возможности влияния на процесс разработки и тестирования.
+                            </div>
+                            
+                            <div class="rule-item">
+                                <span class="rule-number">4.2</span>
+                                Тестировщики выполняют задачи, поставленные администрацией, в установленные сроки 
+                                и с соблюдением требований к качеству отчетности.
+                            </div>
+                            
+                            <div class="rule-item">
+                                <span class="rule-number">4.3</span>
+                                Все существенные решения, касающиеся изменений в функционале, приоритетов тестирования 
+                                или правил участия в проекте, принимаются администрацией после консультации с тестировщиками.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Подраздел 4.5 -->
+                    <div class="subsection">
+                        <h3 class="subsection-title">4.5. Ответственность и санкции</h3>
+                        <div class="subsection-content">
+                            <div class="rule-item">
+                                <span class="rule-number">5.1</span>
+                                Нарушение правил конфиденциальности (раздел 4.1) влечет за собой немедленное исключение 
+                                из проекта с возможным применением дополнительных мер.
+                            </div>
+                            
+                            <div class="rule-item">
+                                <span class="rule-number">5.2</span>
+                                Несоблюдение стандартов профессиональной этики (раздел 4.2) может привести к временному 
+                                ограничению доступа к платформе с обязательным прохождением дополнительного инструктажа.
+                            </div>
+                            
+                            <div class="rule-item">
+                                <span class="rule-number">5.3</span>
+                                Систематическое нарушение требований к качеству отчетности (раздел 4.3) или невыполнение 
+                                поставленных задач может стать основанием для перевода в категорию обычных пользователей.
+                            </div>
+                            
+                            <div class="rule-item">
+                                <span class="rule-number">5.4</span>
+                                Попытки обхода иерархической структуры или несанкционированного получения расширенных 
+                                прав доступа приведут к полной блокировке учетной записи без возможности восстановления.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Вопрос-ответ блоки -->
+                    <div class="qa-block" id="qa-block4">
+                        <div class="question">
+                            Что делать, если я обнаружил серьезную уязвимость в системе безопасности?
+                        </div>
+                        <div class="answer">
+                            Немедленно прекратите любые дальнейшие исследования уязвимости и незамедлительно сообщите 
+                            о ней администрации через защищенный канал связи, указанный в разделе контактов. Самостоятельное 
+                            исследование или демонстрация уязвимости третьим лицам будет расценено как грубое нарушение 
+                            правил конфиденциальности.
+                        </div>
+                    </div>
+                    
+                    <div class="qa-block" id="qa-block5">
+                        <div class="question">
+                            Могу ли я предложить кардинально новую функцию, не предусмотренную текущим планом разработки?
+                        </div>
+                        <div class="answer">
+                            Да, все предложения рассматриваются администрацией. Однако такие предложения должны сопровождаться 
+                            детальным техническим обоснованием, анализом влияния на архитектуру системы и предварительной оценкой 
+                            трудоемкости реализации. Приоритет отдается предложениям, соответствующим стратегическому видению 
+                            развития платформы.
+                        </div>
+                    </div>
+                    
+                    <!-- Примечание в конце -->
+                    <div class="note">
+                        <div class="note-title">Примечание</div>
+                        <p>
+                            Данный документ является внутренним регламентом закрытого бета-тестирования мессенджера SpeakUp 
+                            и может быть дополнен или изменен по решению администрации проекта. Все участники тестирования 
+                            обязаны ознакомиться с актуальной версией документа перед началом активной фазы тестирования.
+                        </p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Кнопка возврата -->
+            <div class="return-section" id="return">
+                <button class="return-btn" onclick="returnToMenu()">
+                    <i class="fas fa-arrow-left"></i>
+                    Вернуться в меню
+                </button>
+                <p class="return-text">
+                    Нажимая эту кнопку, вы вернетесь в главное меню мессенджера SpeakUp.
+                </p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Обновление прогресс-бара при прокрутке
+        window.addEventListener('scroll', function() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+        });
+        
+        // Активная навигация
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                // Удаляем активный класс у всех ссылок
+                document.querySelectorAll('.nav-links a').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Добавляем активный класс текущей ссылке
+                this.classList.add('active');
+                
+                // Плавная прокрутка к цели
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Автоматическое обновление активной навигации при скролле
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.nav-links a');
+            
+            let current = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= (sectionTop - 150)) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+        
+        // Функция возврата в меню
+        function returnToMenu() {
+            // Показываем анимацию
+            const btn = document.querySelector('.return-btn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Перенаправление...';
+            btn.disabled = true;
+            
+            // Перенаправление через 1 секунду
+            setTimeout(() => {
+                window.location.href = 'speakup.html';
+            }, 1000);
+        }
+        
+        // Анимация появления контента
+        window.addEventListener('load', function() {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach((section, index) => {
+                section.style.animationDelay = `${index * 0.2}s`;
+            });
+        });
+        
+        // Темная тема по умолчанию (как в основном приложении)
+        document.body.className = localStorage.getItem('speakup_theme') === 'light' ? 'light-theme' : '';
+    </script>
+</body>
+</html>
