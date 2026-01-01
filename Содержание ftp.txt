@@ -1,0 +1,12 @@
+speakupmess.hgweb.ru
+|-api/
+|  ├── admin/
+|  ├── message/
+|  ├── auth/
+|  ├── cache/
+|  ├── groups/
+|  ├── users/
+|  ├── contacts/
+|  └── chats/
+|
+|-uploads
